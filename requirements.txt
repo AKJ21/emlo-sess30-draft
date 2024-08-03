@@ -1,0 +1,5 @@
+langchain
+langchain-openai
+duckduckgo-search
+fastapi[all]==0.98.0
+gunicorn==20.1.0

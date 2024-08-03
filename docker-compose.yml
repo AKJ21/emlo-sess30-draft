@@ -1,0 +1,76 @@
+# version: '3.6'
+
+# services:
+#   api:
+#     image: quay.io/go-skynet/local-ai:v2.5.1
+#     tty: true # enable colorized logs
+#     restart: always # should this be on-failure ?
+#     ports:
+#       - 8080:8080
+#     env_file:
+#       - .env
+#     volumes:
+#       - ./models:/models
+#       - ./images/:/tmp/generated/images/
+#     command: [ "/usr/bin/local-ai" ]
+
+
+# ---
+
+version: '3.8'
+
+services:
+  api:
+    image: quay.io/go-skynet/local-ai:v2.5.1
+    tty: true # enable colorized logs
+    restart: always # should this be on-failure ?
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    volumes:
+      - ./models:/models
+      - ./images/:/tmp/generated/images/
+    command: [ "/usr/bin/local-ai" ]
+
+  torchserve:
+    image: pytorch/torchserve:0.8.1-gpu
+    container_name: torchserve
+    deploy:      
+      resources:        
+        reservations:          
+          devices:
+            - capabilities: [gpu]
+              driver: nvidia
+              device_ids: ['0']
+    environment:
+      - shm_size=1g
+      - memlock=-1
+      - stack=67108864
+    networks:
+      - deploy_network
+    ports:
+      - 8001:8001
+      - 8081:8081
+      - 8082:8082
+      - 7070:7070
+      - 7071:7071
+    volumes:
+      - /home/ec2-user/Session13/torchservce/config.properties:/home/model-server/config.properties
+      - type: bind
+        source: /home/ec2-user/Session13/torchservce
+        target: /tmp/models
+    command: torchserve --model-store=/tmp/models
+
+  fastapi:
+    build:
+      context: fastapi
+      dockerfile: Dockerfile
+    image: fastapi
+    container_name: fastapi
+    ports:
+      - 9080:9080
+    restart: on-failure
+    networks:
+      - deploy_network
+    command: python3 server.py --host 0.0.0.0 --port 9080

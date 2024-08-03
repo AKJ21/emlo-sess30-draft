@@ -1,0 +1,14 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "emlo30"
+spec:
+  containers:
+    - name: localAI
+      image: 006547668672.dkr.ecr.ap-south-1.amazonaws.com/classifier-k8s:latest
+      ports:
+          - containerPort: 8080
+    - name: fastapi
+      image: 006547668672.dkr.ecr.ap-south-1.amazonaws.com/classifier-k8s:latest
+      ports:
+          - containerPort: 9080
